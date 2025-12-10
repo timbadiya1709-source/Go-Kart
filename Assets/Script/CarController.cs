@@ -23,7 +23,7 @@ public class KartController : MonoBehaviour
     private float engineResponseTime = 0.25f;
     private float brakingDecelerationTime = 2.5f;
     [Header("Traction Control")]
-    private float maxWheelRPM = 8000f;   // limit wheel spin
+    private float maxWheelRPM = 8000f;  
     private float tractionControlFactor = 0.7f; // reduce torque when slipping
 
 

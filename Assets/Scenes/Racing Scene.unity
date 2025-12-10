@@ -1309,6 +1309,94 @@ Transform:
   - {fileID: 7713250330993869724}
   m_Father: {fileID: 1668923658}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1491315801
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.44862
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.31017
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -3.25371
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153906674210464657, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6202448544661481995, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+      propertyPath: m_Name
+      value: Waypoint  (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 789bac991853d514f9aa387d9f1b8301, type: 3}
+--- !u!1 &1533562944
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1533562945}
+  m_Layer: 0
+  m_Name: 'Waypoint '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1533562945
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1533562944}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -3.19}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1562304010
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1576,6 +1664,7 @@ GameObject:
   - component: {fileID: 1668923659}
   - component: {fileID: 1668923660}
   - component: {fileID: 1668923661}
+  - component: {fileID: 1668923662}
   m_Layer: 0
   m_Name: Kart
   m_TagString: Untagged
@@ -1707,6 +1796,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5aa8b584fcc33e5469ab5dbe6eec5d02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VehicleEngineAudio
+--- !u!114 &1668923662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668923655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97975be0d0696bc49927cf6b26953ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaypointScript
+  prefeb: {fileID: 7318933332502016792, guid: d00928e2f2e0bd14a8a9c71aa8b99d66, type: 3}
+  Parent: {fileID: 1533562945}
 --- !u!1 &1706400350
 GameObject:
   m_ObjectHideFlags: 0
@@ -7114,3 +7217,5 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 1668923658}
   - {fileID: 415330395}
+  - {fileID: 1533562945}
+  - {fileID: 1491315801}
