@@ -41,6 +41,8 @@ public class AIKartController : MonoBehaviour
     // AI State
     private Transform currentWaypoint;
     private Transform activeBreakpoint;
+    private bool hasPassedBreakpoint = false;
+
     private int currentLap = 0;
     private bool raceFinished = false;
     private bool hasPassedStartLine = false;
@@ -54,6 +56,7 @@ public class AIKartController : MonoBehaviour
     private Rigidbody rb;
     public float currentSpeedKmh;
     public float gearRatio = 1f;
+
 
     private void Awake()
     {
@@ -137,117 +140,113 @@ public class AIKartController : MonoBehaviour
         HandleBreakpointLogic();
     }
 
-    private void HandleBreakpointLogic()
+ private void HandleBreakpointLogic()
+{
+    GameObject[] breakpoints = GameObject.FindGameObjectsWithTag(breakpointTag);
+    
+    Transform nearestBreakpointAhead = null;
+    float closestDistance = Mathf.Infinity;
+
+    foreach (GameObject breakpoint in breakpoints)
     {
-        GameObject[] breakpoints = GameObject.FindGameObjectsWithTag(breakpointTag);
+        Vector3 directionToBreakpoint = breakpoint.transform.position - transform.position;
+        float distanceToBreakpoint = directionToBreakpoint.magnitude;
         
-        Transform nearestBreakpointAhead = null;
-        float closestDistance = Mathf.Infinity;
+        float dotProduct = Vector3.Dot(transform.forward, directionToBreakpoint.normalized);
 
-        // Find nearest breakpoint AHEAD of the kart
-        foreach (GameObject breakpoint in breakpoints)
+        if (dotProduct > 0.5f && distanceToBreakpoint < closestDistance)
         {
-            Vector3 directionToBreakpoint = breakpoint.transform.position - transform.position;
-            float distanceToBreakpoint = directionToBreakpoint.magnitude;
-            
-            // Check if breakpoint is in front (dot product check)
-            float dotProduct = Vector3.Dot(transform.forward, directionToBreakpoint.normalized);
-
-            // Only consider breakpoints in front of us
-            if (dotProduct > 0.5f && distanceToBreakpoint < closestDistance)
-            {
-                closestDistance = distanceToBreakpoint;
-                nearestBreakpointAhead = breakpoint.transform;
-            }
+            closestDistance = distanceToBreakpoint;
+            nearestBreakpointAhead = breakpoint.transform;
         }
+    }
 
-        // DECISION LOGIC: Should we brake or accelerate?
-        if (nearestBreakpointAhead != null && closestDistance <= breakpointBrakingDistance)
+    if (nearestBreakpointAhead != null && closestDistance <= breakpointBrakingDistance)
+    {
+        activeBreakpoint = nearestBreakpointAhead;
+        hasPassedBreakpoint = false;
+        
+        float brakingIntensity = 1f - (closestDistance / breakpointBrakingDistance);
+        
+        if (currentSpeedKmh > breakpointMinSpeed)
         {
-            // Breakpoint detected ahead - APPLY BRAKES
-            activeBreakpoint = nearestBreakpointAhead;
-            
-            // Reduce throttle based on distance (closer = less throttle)
-            float brakingIntensity = 1f - (closestDistance / breakpointBrakingDistance);
-            
-            // Apply partial throttle to maintain minimum speed
-            if (currentSpeedKmh > breakpointMinSpeed)
-            {
-                aiThrottle = 0f; // Full brake
-                if (debugMode && activeBreakpoint != null) 
-                    Debug.Log("Braking for: " + activeBreakpoint.name + " | Distance: " + closestDistance.ToString("F1") + "m | Speed: " + currentSpeedKmh.ToString("F1"));
-            }
-            else
-            {
-                aiThrottle = 0.3f; // Light throttle to prevent stopping
-                if (debugMode) Debug.Log("Maintaining minimum speed at breakpoint: " + currentSpeedKmh.ToString("F1"));
-            }
+            aiThrottle = 0f;
+            if (debugMode && activeBreakpoint != null) 
+                Debug.Log("Braking for: " + activeBreakpoint.name + " | Distance: " + closestDistance.ToString("F1") + "m | Speed: " + currentSpeedKmh.ToString("F1"));
         }
         else
         {
-            // NO breakpoint ahead OR passed it - FULL ACCELERATION
-            if (activeBreakpoint != null && debugMode)
-            {
-                Debug.Log("Passed breakpoint: " + activeBreakpoint.name + " - RESUMING ACCELERATION");
-            }
-            
-            activeBreakpoint = null;
-            aiThrottle = 1f; // Full throttle
+            aiThrottle = 0.3f;
+            if (debugMode) Debug.Log("Maintaining minimum speed at breakpoint: " + currentSpeedKmh.ToString("F1"));
+        }
+    }
+    else
+    {
+        if (activeBreakpoint != null && !hasPassedBreakpoint)
+        {
+            hasPassedBreakpoint = true;
+            if (debugMode) Debug.Log("Passed breakpoint: " + activeBreakpoint.name + " - Finding next waypoint");
+            FindNextWaypoint();
+        }
+        
+        activeBreakpoint = null;
+        aiThrottle = 1f;
+    }
+}
+
+
+private void FindNextWaypoint()
+{
+    GameObject[] waypoints = GameObject.FindGameObjectsWithTag(waypointTag);
+    
+    if (waypoints.Length == 0)
+    {
+        Debug.LogWarning("No waypoints found with tag: " + waypointTag);
+        return;
+    }
+
+    Transform nearestWaypoint = null;
+    float shortestDistance = Mathf.Infinity;
+    Vector3 currentPosition = transform.position;
+    float expandedRadius = hasPassedBreakpoint ? waypointDetectionRadius * 3f : waypointDetectionRadius;
+
+    foreach (GameObject waypoint in waypoints)
+    {
+        if (currentWaypoint != null && waypoint.transform == currentWaypoint)
+            continue;
+
+        Vector3 directionToWaypoint = waypoint.transform.position - currentPosition;
+        float distanceToWaypoint = directionToWaypoint.magnitude;
+        float dotProduct = Vector3.Dot(transform.forward, directionToWaypoint.normalized);
+
+        float dotThreshold = hasPassedBreakpoint ? -0.2f : 0.3f;
+        
+        if (dotProduct > dotThreshold && distanceToWaypoint < shortestDistance)
+        {
+            shortestDistance = distanceToWaypoint;
+            nearestWaypoint = waypoint.transform;
         }
     }
 
-    private void FindNextWaypoint()
+    if (nearestWaypoint == null)
     {
-        GameObject[] waypoints = GameObject.FindGameObjectsWithTag(waypointTag);
-        
-        if (waypoints.Length == 0)
-        {
-            Debug.LogWarning("No waypoints found with tag: " + waypointTag);
-            return;
-        }
-
-        Transform nearestWaypoint = null;
-        float shortestDistance = Mathf.Infinity;
-        Vector3 currentPosition = transform.position;
-
-        // Find nearest waypoint ahead
+        shortestDistance = Mathf.Infinity;
         foreach (GameObject waypoint in waypoints)
         {
-            // Skip current waypoint
-            if (currentWaypoint != null && waypoint.transform == currentWaypoint)
-                continue;
-
-            Vector3 directionToWaypoint = waypoint.transform.position - currentPosition;
-            float distanceToWaypoint = directionToWaypoint.magnitude;
-            float dotProduct = Vector3.Dot(transform.forward, directionToWaypoint.normalized);
-
-            // Prioritize waypoints ahead
-            if (dotProduct > 0.3f && distanceToWaypoint < shortestDistance)
+            float distance = Vector3.Distance(currentPosition, waypoint.transform.position);
+            if (distance < shortestDistance && waypoint.transform != currentWaypoint)
             {
-                shortestDistance = distanceToWaypoint;
+                shortestDistance = distance;
                 nearestWaypoint = waypoint.transform;
             }
         }
-
-        // Fallback: if no waypoint ahead, find absolute nearest (for loop completion)
-        if (nearestWaypoint == null)
-        {
-            shortestDistance = Mathf.Infinity;
-            foreach (GameObject waypoint in waypoints)
-            {
-                float distance = Vector3.Distance(currentPosition, waypoint.transform.position);
-                if (distance < shortestDistance && waypoint.transform != currentWaypoint)
-                {
-                    shortestDistance = distance;
-                    nearestWaypoint = waypoint.transform;
-                }
-            }
-        }
-
-        currentWaypoint = nearestWaypoint;
-        if (debugMode && currentWaypoint != null) 
-            Debug.Log("New target waypoint: " + currentWaypoint.name + " | Distance: " + shortestDistance.ToString("F1") + "m");
     }
+
+    currentWaypoint = nearestWaypoint;
+    if (debugMode && currentWaypoint != null) 
+        Debug.Log("New target waypoint: " + currentWaypoint.name + " | Distance: " + shortestDistance.ToString("F1") + "m");
+}
+
 
     private void HandleMotor()
     {

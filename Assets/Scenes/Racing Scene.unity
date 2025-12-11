@@ -131,6 +131,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: 'AI Kart '
       objectReference: {fileID: 0}
+    - target: {fileID: 4401939216452366237, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5607362063844612379, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6986973125290600541, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.10497
@@ -3400,6 +3408,14 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Waypoint
       objectReference: {fileID: 0}
+    - target: {fileID: 6871854794734066769, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 221.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6871854794734066769, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -287.6
+      objectReference: {fileID: 0}
     - target: {fileID: 6911548507457358352, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
       propertyPath: m_Name
       value: Sphere89
@@ -3620,6 +3636,14 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Waypoint
       objectReference: {fileID: 0}
+    - target: {fileID: 8207708148330529069, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 229.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8207708148330529069, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -303.6
+      objectReference: {fileID: 0}
     - target: {fileID: 8389518803310056007, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
       propertyPath: m_Name
       value: Sphere87
@@ -3756,6 +3780,14 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Waypoint
       objectReference: {fileID: 0}
+    - target: {fileID: 9171344930479816059, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 234.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 9171344930479816059, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -316.2
+      objectReference: {fileID: 0}
     - target: {fileID: 9211613000613216036, guid: 915f01711ce1d7f49a83214198b13906, type: 3}
       propertyPath: m_Name
       value: Sphere120
@@ -3807,6 +3839,10 @@ PrefabInstance:
     - target: {fileID: 4401939216452366237, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
       propertyPath: kart
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4401939216452366237, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5607362063844612379, guid: cf76cf49433fdbb4eb9210c05dc8566a, type: 3}
       propertyPath: m_IsActive
