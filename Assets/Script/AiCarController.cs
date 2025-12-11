@@ -41,11 +41,12 @@ public class AIKartController : MonoBehaviour
     // AI State
     private Transform currentWaypoint;
     private Transform activeBreakpoint;
-    private bool hasPassedBreakpoint = false;
-
     private int currentLap = 0;
     private bool raceFinished = false;
     private bool hasPassedStartLine = false;
+    private bool hasPassedBreakpoint = false;
+    private int currentWaypointIndex = 1; // Start at Waypoint1
+    private int totalWaypoints = 0;
     
     private float currentSteerAngle;
     private float currentBrakeForce;
@@ -57,7 +58,6 @@ public class AIKartController : MonoBehaviour
     public float currentSpeedKmh;
     public float gearRatio = 1f;
 
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -66,9 +66,21 @@ public class AIKartController : MonoBehaviour
     private void Start()
     {
         rb.centerOfMass = new Vector3(0, -0.5f, 0);
+        
+        // Count total waypoints
+        GameObject[] allWaypoints = GameObject.FindGameObjectsWithTag(waypointTag);
+        totalWaypoints = allWaypoints.Length;
+        
+        if (totalWaypoints == 0)
+        {
+            Debug.LogError("No waypoints found! Please add waypoints with tag: " + waypointTag);
+            return;
+        }
+        
+        currentWaypointIndex = 1;
         FindNextWaypoint();
-        currentLap = 1; // Start at lap 1
-        Debug.Log("AI Race Started - Target: " + totalLaps + " laps");
+        currentLap = 1;
+        Debug.Log("AI Race Started - Target: " + totalLaps + " laps | Total Waypoints: " + totalWaypoints);
     }
 
     private void FixedUpdate()
@@ -140,113 +152,117 @@ public class AIKartController : MonoBehaviour
         HandleBreakpointLogic();
     }
 
- private void HandleBreakpointLogic()
-{
-    GameObject[] breakpoints = GameObject.FindGameObjectsWithTag(breakpointTag);
-    
-    Transform nearestBreakpointAhead = null;
-    float closestDistance = Mathf.Infinity;
-
-    foreach (GameObject breakpoint in breakpoints)
+    private void HandleBreakpointLogic()
     {
-        Vector3 directionToBreakpoint = breakpoint.transform.position - transform.position;
-        float distanceToBreakpoint = directionToBreakpoint.magnitude;
+        GameObject[] breakpoints = GameObject.FindGameObjectsWithTag(breakpointTag);
         
-        float dotProduct = Vector3.Dot(transform.forward, directionToBreakpoint.normalized);
+        Transform nearestBreakpointAhead = null;
+        float closestDistance = Mathf.Infinity;
 
-        if (dotProduct > 0.5f && distanceToBreakpoint < closestDistance)
+        // Find nearest breakpoint AHEAD of the kart
+        foreach (GameObject breakpoint in breakpoints)
         {
-            closestDistance = distanceToBreakpoint;
-            nearestBreakpointAhead = breakpoint.transform;
+            Vector3 directionToBreakpoint = breakpoint.transform.position - transform.position;
+            float distanceToBreakpoint = directionToBreakpoint.magnitude;
+            
+            // Check if breakpoint is in front (dot product check)
+            float dotProduct = Vector3.Dot(transform.forward, directionToBreakpoint.normalized);
+
+            // Only consider breakpoints in front of us
+            if (dotProduct > 0.5f && distanceToBreakpoint < closestDistance)
+            {
+                closestDistance = distanceToBreakpoint;
+                nearestBreakpointAhead = breakpoint.transform;
+            }
         }
-    }
 
-    if (nearestBreakpointAhead != null && closestDistance <= breakpointBrakingDistance)
-    {
-        activeBreakpoint = nearestBreakpointAhead;
-        hasPassedBreakpoint = false;
-        
-        float brakingIntensity = 1f - (closestDistance / breakpointBrakingDistance);
-        
-        if (currentSpeedKmh > breakpointMinSpeed)
+        // DECISION LOGIC: Should we brake or accelerate?
+        if (nearestBreakpointAhead != null && closestDistance <= breakpointBrakingDistance)
         {
-            aiThrottle = 0f;
-            if (debugMode && activeBreakpoint != null) 
-                Debug.Log("Braking for: " + activeBreakpoint.name + " | Distance: " + closestDistance.ToString("F1") + "m | Speed: " + currentSpeedKmh.ToString("F1"));
+            // Breakpoint detected ahead - APPLY BRAKES
+            activeBreakpoint = nearestBreakpointAhead;
+            
+            // Reduce throttle based on distance (closer = less throttle)
+            float brakingIntensity = 1f - (closestDistance / breakpointBrakingDistance);
+            
+            // Apply partial throttle to maintain minimum speed
+            if (currentSpeedKmh > breakpointMinSpeed)
+            {
+                aiThrottle = 0f; // Full brake
+                if (debugMode && activeBreakpoint != null) 
+                    Debug.Log("Braking for: " + activeBreakpoint.name + " | Distance: " + closestDistance.ToString("F1") + "m | Speed: " + currentSpeedKmh.ToString("F1"));
+            }
+            else
+            {
+                aiThrottle = 0.3f; // Light throttle to prevent stopping
+                if (debugMode) Debug.Log("Maintaining minimum speed at breakpoint: " + currentSpeedKmh.ToString("F1"));
+            }
         }
         else
         {
-            aiThrottle = 0.3f;
-            if (debugMode) Debug.Log("Maintaining minimum speed at breakpoint: " + currentSpeedKmh.ToString("F1"));
+            // NO breakpoint ahead OR passed it - FULL ACCELERATION
+            if (activeBreakpoint != null && debugMode)
+            {
+                Debug.Log("Passed breakpoint: " + activeBreakpoint.name + " - RESUMING ACCELERATION");
+            }
+            
+            activeBreakpoint = null;
+            aiThrottle = 1f; // Full throttle
         }
     }
-    else
+
+    private void FindNextWaypoint()
     {
-        if (activeBreakpoint != null && !hasPassedBreakpoint)
-        {
-            hasPassedBreakpoint = true;
-            if (debugMode) Debug.Log("Passed breakpoint: " + activeBreakpoint.name + " - Finding next waypoint");
-            FindNextWaypoint();
-        }
+        GameObject[] waypoints = GameObject.FindGameObjectsWithTag(waypointTag);
         
-        activeBreakpoint = null;
-        aiThrottle = 1f;
-    }
-}
-
-
-private void FindNextWaypoint()
-{
-    GameObject[] waypoints = GameObject.FindGameObjectsWithTag(waypointTag);
-    
-    if (waypoints.Length == 0)
-    {
-        Debug.LogWarning("No waypoints found with tag: " + waypointTag);
-        return;
-    }
-
-    Transform nearestWaypoint = null;
-    float shortestDistance = Mathf.Infinity;
-    Vector3 currentPosition = transform.position;
-    float expandedRadius = hasPassedBreakpoint ? waypointDetectionRadius * 3f : waypointDetectionRadius;
-
-    foreach (GameObject waypoint in waypoints)
-    {
-        if (currentWaypoint != null && waypoint.transform == currentWaypoint)
-            continue;
-
-        Vector3 directionToWaypoint = waypoint.transform.position - currentPosition;
-        float distanceToWaypoint = directionToWaypoint.magnitude;
-        float dotProduct = Vector3.Dot(transform.forward, directionToWaypoint.normalized);
-
-        float dotThreshold = hasPassedBreakpoint ? -0.2f : 0.3f;
-        
-        if (dotProduct > dotThreshold && distanceToWaypoint < shortestDistance)
+        if (waypoints.Length == 0)
         {
-            shortestDistance = distanceToWaypoint;
-            nearestWaypoint = waypoint.transform;
+            Debug.LogWarning("No waypoints found with tag: " + waypointTag);
+            return;
         }
-    }
 
-    if (nearestWaypoint == null)
-    {
-        shortestDistance = Mathf.Infinity;
+        Transform nearestWaypoint = null;
+        float shortestDistance = Mathf.Infinity;
+        Vector3 currentPosition = transform.position;
+
+        // Find nearest waypoint ahead
         foreach (GameObject waypoint in waypoints)
         {
-            float distance = Vector3.Distance(currentPosition, waypoint.transform.position);
-            if (distance < shortestDistance && waypoint.transform != currentWaypoint)
+            // Skip current waypoint
+            if (currentWaypoint != null && waypoint.transform == currentWaypoint)
+                continue;
+
+            Vector3 directionToWaypoint = waypoint.transform.position - currentPosition;
+            float distanceToWaypoint = directionToWaypoint.magnitude;
+            float dotProduct = Vector3.Dot(transform.forward, directionToWaypoint.normalized);
+
+            // Prioritize waypoints ahead
+            if (dotProduct > 0.3f && distanceToWaypoint < shortestDistance)
             {
-                shortestDistance = distance;
+                shortestDistance = distanceToWaypoint;
                 nearestWaypoint = waypoint.transform;
             }
         }
+
+        // Fallback: if no waypoint ahead, find absolute nearest (for loop completion)
+        if (nearestWaypoint == null)
+        {
+            shortestDistance = Mathf.Infinity;
+            foreach (GameObject waypoint in waypoints)
+            {
+                float distance = Vector3.Distance(currentPosition, waypoint.transform.position);
+                if (distance < shortestDistance && waypoint.transform != currentWaypoint)
+                {
+                    shortestDistance = distance;
+                    nearestWaypoint = waypoint.transform;
+                }
+            }
+        }
+
+        currentWaypoint = nearestWaypoint;
+        if (debugMode && currentWaypoint != null) 
+            Debug.Log("New target waypoint: " + currentWaypoint.name + " | Distance: " + shortestDistance.ToString("F1") + "m");
     }
-
-    currentWaypoint = nearestWaypoint;
-    if (debugMode && currentWaypoint != null) 
-        Debug.Log("New target waypoint: " + currentWaypoint.name + " | Distance: " + shortestDistance.ToString("F1") + "m");
-}
-
 
     private void HandleMotor()
     {
@@ -255,22 +271,35 @@ private void FindNextWaypoint()
         float lerpSpeed = Time.fixedDeltaTime / engineResponseTime;
         smoothedMotorInput = Mathf.Lerp(smoothedMotorInput, targetMotorInput, lerpSpeed);
 
+        // Hard speed limiter - cut power if exceeding max speed
+        if (currentSpeedKmh >= maxSpeed)
+        {
+            smoothedMotorInput = 0f;
+            targetMotorInput = 0f;
+        }
+
         // Gearbox system
         if (currentSpeedKmh < 20f) gearRatio = 3.5f;
         else if (currentSpeedKmh < 50f) gearRatio = 2.5f;
         else if (currentSpeedKmh < 90f) gearRatio = 1.8f;
-        else if (currentSpeedKmh < 140f) gearRatio = 1.2f;
-        else gearRatio = 0.8f;
+        else if (currentSpeedKmh < maxSpeed) gearRatio = 1.2f;
+        else gearRatio = 0.5f; // Very weak torque above max speed
 
-        // Motor force scaling
-        float speedRatio = currentSpeedKmh / maxSpeed;
-        float speedFactor = Mathf.Max(0.1f, 1f - Mathf.Pow(speedRatio, 2f));
+        // Motor force scaling with stricter speed limiting
+        float speedRatio = Mathf.Clamp01(currentSpeedKmh / maxSpeed);
+        float speedFactor = Mathf.Max(0.05f, 1f - Mathf.Pow(speedRatio, 1.5f));
         float appliedMotorForce = motorForce * gearRatio * speedFactor;
 
         // Don't apply zero torque at low speeds if we want to accelerate
         if (currentSpeedKmh < 0.5f && aiThrottle > 0f)
         {
             appliedMotorForce = motorForce * 3.5f; // Boost from standstill
+        }
+
+        // Cut motor force completely at max speed
+        if (currentSpeedKmh >= maxSpeed)
+        {
+            appliedMotorForce = 0f;
         }
 
         // Traction control
